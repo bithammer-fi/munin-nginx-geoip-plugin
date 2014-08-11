@@ -1,0 +1,87 @@
+#!/bin/bash
+
+ACCESSLOG_DEFAULT="/var/log/nginx/access.log"
+DIRECTORY="${MUNIN_PLUGINSTATE:-/var/lib/munin-node/plugin-state/nginx_request_geoip}"
+UNIQUES_FILE="$DIRECTORY/.uniques_file"
+UNIQUES_LOG="$DIRECTORY/.uniques_log"
+TEMP="$DIRECTORY/.temp"
+FLOAT_SCALE="6"
+
+if [ "$1" = "autoconf" ]
+then
+	echo "yes"
+	exit 0
+fi
+
+if [ "$1" = "config" ]
+then
+	printf '%s\n' "graph_title Nginx requests by country"
+	printf '%s\n' "graph_category nginx"
+	printf '%s\n' "graph_args --base 1000"
+	printf '%s\n' "graph_vlabel Requests per second"
+
+	echo 0 > $TEMP
+	
+	while read UNIQUE; do
+		printf '%s.label %s\n' "$UNIQUE" "$UNIQUE"
+		COUNT=$[$(cat $TEMP) + 1]
+		if [ $COUNT -eq 1 ]; then
+			#printf '%s.draw AREA\n' "$UNIQUE"
+			printf '%s.draw LINE2\n' "$UNIQUE"
+		else
+			#printf '%s.draw STACK\n' "$UNIQUE"
+			printf '%s.draw LINE2\n' "$UNIQUE"
+		fi
+		echo $COUNT > $TEMP
+	done <$UNIQUES_LOG
+	exit 0
+fi
+
+[[ -d $DIRECTORY ]] || mkdir $DIRECTORY
+
+if [ -z "$TIMESPAN" ]; then
+	SPAN="5"
+else
+	SPAN=$TIMESPAN
+fi
+
+E1="$TIMESPAN * 60"
+DENOM=$(printf '%s\n' "scale=$FLOAT_SCALE; $E1" | bc 2>/dev/null)
+
+if [ -z "$ACCESSFILE" ]; then
+	ACCESSLOG=$ACCESSLOG_DEFAULT
+else
+	ACCESSLOG=$ACCESSFILE
+fi
+
+# List latest accesses
+LATEST=$(awk -vDate=`LC_ALL=en_US date --date="-$SPAN min" "+[%d/%b/%Y:%H:%M:%S"` '$3 > Date' $ACCESSLOG)
+
+# Cut extra info
+LATEST_COUNTRIES=$(printf '%s\n' "$LATEST" | awk '{print $NF}')
+
+FOUND_UNIQUES=$(printf '%s\n' "$LATEST_COUNTRIES" | sort | uniq)
+
+for UNIQUE in $FOUND_UNIQUES
+do
+	if ! grep -Fxq $UNIQUE $UNIQUES_LOG; then
+		printf '%s\n' "$UNIQUE" >> $UNIQUES_LOG
+		printf '%s.label %s\n' "$UNIQUE"
+	fi
+done
+
+if [ ! -f $UNIQUES_LOG ]; then
+	touch $UNIQUES_LOG
+fi
+
+# Print access counts
+while read UNIQUE; do
+	#COUNT=$(echo "$LATEST_COUNTRIES" | grep $UNIQUE | wc -l)
+	COUNT=$(printf '%s\n' "$LATEST_COUNTRIES" | grep $UNIQUE | wc -l)
+	E2="$COUNT / $DENOM"
+	RPS=$(printf '%s\n' "scale=$FLOAT_SCALE; $E2" | bc 2>/dev/null)
+	printf '%s.value %s\n' "$UNIQUE" "$RPS"
+done <$UNIQUES_LOG
+
+exit 0
+
