@@ -4,14 +4,13 @@ ACCESSLOG_DEFAULT="/var/log/nginx/access.log"
 DIRECTORY="${MUNIN_PLUGINSTATE:-/var/lib/munin-node/plugin-state/nginx_request_geoip}"
 UNIQUES_FILE="$DIRECTORY/.uniques_file"
 UNIQUES_LOG="$DIRECTORY/.uniques_log"
-TEMP="$DIRECTORY/.temp"
 FLOAT_SCALE="6"
 
-if [ "$1" = "autoconf" ]
-then
-	echo "yes"
-	exit 0
-fi
+#if [ "$1" = "autoconf" ]
+#then
+#	echo "yes"
+#	exit 0
+#fi
 
 if [ "$1" = "config" ]
 then
@@ -24,15 +23,7 @@ then
 	
 	while read UNIQUE; do
 		printf '%s.label %s\n' "$UNIQUE" "$UNIQUE"
-		COUNT=$[$(cat $TEMP) + 1]
-		if [ $COUNT -eq 1 ]; then
-			#printf '%s.draw AREA\n' "$UNIQUE"
-			printf '%s.draw LINE2\n' "$UNIQUE"
-		else
-			#printf '%s.draw STACK\n' "$UNIQUE"
-			printf '%s.draw LINE2\n' "$UNIQUE"
-		fi
-		echo $COUNT > $TEMP
+		printf '%s.draw LINE2\n' "$UNIQUE"
 	done <$UNIQUES_LOG
 	exit 0
 fi
