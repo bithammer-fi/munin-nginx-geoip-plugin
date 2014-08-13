@@ -35,8 +35,6 @@ then
 	printf '%s\n' "graph_args --base 1000"
 	printf '%s\n' "graph_vlabel Requests per second"
 
-	echo 0 > $TEMP
-	
 	while read UNIQUE; do
 		printf '%s.label %s\n' "$UNIQUE" "$UNIQUE"
 		printf '%s.draw LINE2\n' "$UNIQUE"
