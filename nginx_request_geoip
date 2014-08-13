@@ -61,10 +61,6 @@ do
 	fi
 done
 
-if [ ! -f $UNIQUES_LOG ]; then
-	touch $UNIQUES_LOG
-fi
-
 # Print access counts
 while read UNIQUE; do
 	#COUNT=$(echo "$LATEST_COUNTRIES" | grep $UNIQUE | wc -l)
