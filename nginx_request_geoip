@@ -57,7 +57,6 @@ DENOM=$(printf '%s\n' "scale=$FLOAT_SCALE; $E1" | bc 2>/dev/null)
 
 # Print access counts
 while read UNIQUE; do
-	#COUNT=$(echo "$LATEST_COUNTRIES" | grep $UNIQUE | wc -l)
 	COUNT=$(printf '%s\n' "$LATEST_COUNTRIES" | grep $UNIQUE | wc -l)
 	E2="$COUNT / $DENOM"
 	RPS=$(printf '%s\n' "scale=$FLOAT_SCALE; $E2" | bc 2>/dev/null)
