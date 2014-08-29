@@ -1,7 +1,7 @@
 munin-nginx-geoip-plugin
 ========================
 
-Munin plugin for monitorin Nginx accesses by country.
+Munin plugin for monitoring Nginx accesses by country.
 
 # Setup
 
